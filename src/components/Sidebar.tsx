@@ -51,7 +51,8 @@ const Sidebar = () => {
 
       <div className="sticky inset-x-0 bottom-0 border-t border-gray-100">
         <div
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
             void signOut();
           }}
           className="flex cursor-pointer items-center gap-2 bg-base-100 p-4 hover:bg-gray-50"
@@ -78,7 +79,8 @@ const Sidebar = () => {
             </>
           ) : (
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
                 void signIn("github");
               }}
             >
