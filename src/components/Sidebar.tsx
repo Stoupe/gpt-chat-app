@@ -2,7 +2,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { Fragment } from "react";
 import { api } from "~/utils/api";
 
 const Sidebar = () => {
@@ -10,6 +10,9 @@ const Sidebar = () => {
   const chatId = query.chatId as string | undefined;
 
   const session = useSession();
+  const user = session.data?.user;
+  const isAuthed = !!user;
+
   const { data: chats, refetch } = api.chat.getAll.useQuery();
   const { mutateAsync: createNewChat } = api.chat.create.useMutation({
     onSuccess: (chat) => {
@@ -36,28 +39,34 @@ const Sidebar = () => {
           ))}
         </nav>
 
-        <div className="px-4">
-          <button
-            className="btn-outline btn w-full"
-            onClick={(e) => {
-              e.preventDefault();
-              void createNewChat();
-            }}
-          >
-            New chat
-          </button>
-        </div>
+        {isAuthed && (
+          <div className="px-4">
+            <button
+              className="btn-outline btn w-full"
+              onClick={(e) => {
+                e.preventDefault();
+                void createNewChat();
+              }}
+            >
+              New chat
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="sticky inset-x-0 bottom-0 border-t border-gray-100">
-        <div
-          onClick={(e) => {
-            e.preventDefault();
+      <div
+        className={`${
+          isAuthed ? "tooltip cursor-pointer" : ""
+        } sticky inset-x-0 bottom-0 border-t border-gray-100`}
+        data-tip={isAuthed ? "Sign out" : null}
+        onClick={() => {
+          if (isAuthed) {
             void signOut();
-          }}
-          className="flex cursor-pointer items-center gap-2 bg-base-100 p-4 hover:bg-gray-50"
-        >
-          {session.data?.user ? (
+          }
+        }}
+      >
+        <div className="flex items-center gap-2 bg-base-100 p-4 hover:bg-gray-50">
+          {isAuthed ? (
             <>
               <Image
                 width={10}
@@ -68,21 +77,16 @@ const Sidebar = () => {
               />
 
               <div>
-                <p className="text-xs">
-                  <strong className="block font-medium">
-                    {session.data?.user.name}
-                  </strong>
-
-                  <span> {session.data?.user.email} </span>
-                </p>
+                <div className="flex flex-col text-start text-xs">
+                  <span className=" font-medium">{user.name}</span>
+                  <span>{user.email}</span>
+                </div>
               </div>
             </>
           ) : (
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                void signIn("github");
-              }}
+              className="btn-outline btn w-full"
+              onClick={() => void signIn("github")}
             >
               Sign in with Github
             </button>
