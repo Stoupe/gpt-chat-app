@@ -14,7 +14,7 @@ const handler = async (req: Request): Promise<Response> => {
   const messagesSchema: z.ZodType<ChatCompletionRequestMessage[]> = z.array(
     z.object({
       role: z.nativeEnum(ChatCompletionRequestMessageRoleEnum),
-      content: z.string().min(1).max(1000),
+      content: z.string().min(1),
       name: z.string().min(1).max(100).optional(),
     })
   );
@@ -28,7 +28,7 @@ const handler = async (req: Request): Promise<Response> => {
     top_p: 1,
     frequency_penalty: 0,
     presence_penalty: 0,
-    max_tokens: 1000,
+    max_tokens: 4000,
     stream: true,
     n: 1,
   };
