@@ -2,7 +2,7 @@ import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { api } from "~/utils/api";
 
@@ -19,7 +19,6 @@ const ChatPage: NextPage = () => {
     data: chat,
     isLoading: isLoadingMessages,
     isError,
-    refetch: refetchMessages,
   } = api.message.getAll.useQuery(
     { chatId },
     {
@@ -30,13 +29,22 @@ const ChatPage: NextPage = () => {
     }
   );
 
-  const { mutate: submitMessage, isLoading: isCreatingMessage } =
-    api.openai.createChatCompletion.useMutation({
-      onSuccess: () => {
-        setInput("");
-        void refetchMessages();
-      },
-    });
+  // const [response, setResponse] = useState("");
+
+  // const { mutate: submitMessage, isLoading: isCreatingMessage } =
+  //   api.openai.createChatCompletion.useMutation({
+  //     onSettled: () => {
+  //       setInput("");
+  //       void refetchMessages();
+  //     },
+  //   });
+
+  // const submitNew = api.openai.create.useMutation();
+  // const submitSub = api.openai.onCreate.useSubscription(undefined, {
+  //   onData: (data) => {
+  //     console.log("onData", data);
+  //   },
+  // });
 
   const { mutate: deleteChat } = api.chat.delete.useMutation({
     onSettled: async () => {
@@ -44,6 +52,52 @@ const ChatPage: NextPage = () => {
       void utils.chat.getAll.invalidate();
     },
   });
+
+  // const [generatedBios, setGeneratedBios] = useState("");
+  // const [loading, setLoading] = useState(false);
+
+  const [chatResponse, setChatResponse] = useState("");
+  const [isStreamingChatResponse, setIsStreamingChatResponse] = useState(false);
+
+  const generateChatResponse = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setChatResponse("");
+    setIsStreamingChatResponse(true);
+
+    console.log("sending request");
+
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify([{ role: "user", content: input.trim() }]),
+    });
+
+    console.log("got response");
+
+    if (!response.ok) {
+      console.error(response);
+      throw new Error(response.statusText);
+    }
+
+    const data = response.body;
+    if (!data) {
+      return;
+    }
+    const reader = data.getReader();
+    const decoder = new TextDecoder();
+    let done = false;
+
+    while (!done) {
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      const chunkValue = decoder.decode(value);
+      setChatResponse((prev) => prev + chunkValue);
+    }
+
+    setIsStreamingChatResponse(false);
+  };
 
   if (!session) {
     return null;
@@ -77,29 +131,33 @@ const ChatPage: NextPage = () => {
               </span>
             </div>
           ))}
+          <div className="p-4">
+            <p className="font-bold">Response</p>
+            <span className="prose">
+              <ReactMarkdown>{chatResponse}</ReactMarkdown>
+            </span>
+          </div>
         </div>
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
             if (!chatId) return;
-            void submitMessage({
-              chatId,
-              message: input,
-            });
+            void generateChatResponse(e);
           }}
           className="form-control flex flex-row gap-4"
         >
-          <input
-            type="text"
-            className="input-bordered input w-full"
+          <textarea
+            className="input textarea-bordered textarea w-full"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            disabled={isCreatingMessage}
+            disabled={isStreamingChatResponse}
           />
           <button
-            disabled={isCreatingMessage}
-            className={`btn-outline ${isCreatingMessage ? "loading" : ""} btn`}
+            disabled={isStreamingChatResponse}
+            className={`btn-outline ${
+              isStreamingChatResponse ? "loading" : ""
+            } btn`}
             type="submit"
           >
             send
@@ -111,7 +169,7 @@ const ChatPage: NextPage = () => {
               void deleteChat({ chatId });
             }}
             className="btn-error btn"
-            disabled={isCreatingMessage}
+            disabled={isStreamingChatResponse}
           >
             Delete Chat
           </button>
