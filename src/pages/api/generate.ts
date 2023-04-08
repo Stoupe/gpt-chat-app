@@ -1,4 +1,5 @@
 import {
+  ChatCompletionRequestMessageRoleEnum,
   type ChatCompletionRequestMessage,
   type CreateChatCompletionRequest,
 } from "openai";
@@ -10,19 +11,15 @@ export const config = {
 };
 
 const handler = async (req: Request): Promise<Response> => {
-  console.log("IN HANDLER");
-
   const messagesSchema: z.ZodType<ChatCompletionRequestMessage[]> = z.array(
     z.object({
-      role: z.enum(["user", "system", "assistant"]),
+      role: z.nativeEnum(ChatCompletionRequestMessageRoleEnum),
       content: z.string().min(1).max(1000),
-      name: z.string().min(1).max(1000).optional(),
+      name: z.string().min(1).max(100).optional(),
     })
   );
 
   const messages = messagesSchema.parse(await req.json());
-
-  console.log("MESSAGES", messages);
 
   const payload: CreateChatCompletionRequest = {
     model: "gpt-4",

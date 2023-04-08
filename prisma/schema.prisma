@@ -67,9 +67,9 @@ model VerificationToken {
 }
 
 enum Role {
-    ASSISTANT
-    USER
-    SYSTEM
+    assistant
+    user
+    system
 }
 
 model Message {
@@ -78,6 +78,7 @@ model Message {
     updatedAt DateTime @updatedAt
     content   String
     role      Role
+    name      String
     chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
     chatId    String
 }

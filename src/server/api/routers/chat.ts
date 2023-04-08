@@ -22,12 +22,15 @@ export const chatRouter = createTRPCRouter({
         select: {
           id: true,
           userId: true,
+          name: true,
           messages: {
             select: {
               id: true,
               content: true,
               role: true,
               createdAt: true,
+              updatedAt: true,
+              name: true,
             },
           },
         },
