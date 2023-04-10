@@ -9,7 +9,7 @@ import {
 } from "openai";
 import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { useChat } from "./useChat";
+import { useChat } from "../../hooks/useChat";
 import Link from "next/link";
 
 const ChatPage: NextPage = () => {
