@@ -6,7 +6,7 @@ const Layout: FC<{ children: ReactNode }> = ({ children }) => {
   const session = useSession();
   return (
     <div className="flex">
-      <aside className="sticky top-0 left-0">
+      <aside>
         <Sidebar />
       </aside>
       {session.data?.user ? children : null}

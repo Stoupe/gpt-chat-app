@@ -7,10 +7,10 @@ import {
   ChatCompletionRequestMessageRoleEnum,
   type ChatCompletionRequestMessage,
 } from "openai";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { api } from "~/utils/api";
 import { useChat } from "./useChat";
+import Link from "next/link";
 
 const ChatPage: NextPage = () => {
   //Get chat id from url path (nextjs)
@@ -226,11 +226,30 @@ const ChatPage: NextPage = () => {
       </Head>
 
       <div className="flex max-h-screen w-full flex-col p-5">
-        <h1 className="text-xl font-bold">{chat.name}</h1>
+        <div className="flex items-center gap-3">
+          <Link href={"/"} className="btn-ghost btn gap-2 border-base-200">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="h-6 w-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
+              />
+            </svg>
+            Home
+          </Link>
+          <h1 className="text-xl font-bold">{chat.name}</h1>
+        </div>
 
-        <div className="grow overflow-y-scroll">
+        <div className="mt-2 flex grow flex-col gap-2 overflow-y-scroll">
           {chat.messages.map((message) => (
-            <div className="m-2 rounded-lg bg-gray-50 p-4" key={message.id}>
+            <div className="rounded-lg bg-gray-50 p-4" key={message.id}>
               <p className="font-bold">
                 {message.name} ({message.role})
               </p>
