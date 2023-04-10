@@ -22,7 +22,7 @@ import { prisma } from "~/server/db";
 
 type CreateContextOptions = {
   session: Session | null;
-  openai: OpenAIApi;
+  // openai: OpenAIApi;
 };
 
 /**
@@ -38,7 +38,7 @@ type CreateContextOptions = {
 const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
-    openai: opts.openai,
+    // openai: opts.openai,
     prisma,
   };
 };
@@ -55,14 +55,14 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
   // Get the session from the server using the getServerSession wrapper function
   const session = await getServerAuthSession({ req, res });
 
-  const configuration = new Configuration({
-    apiKey: env.OPENAI_API_KEY,
-  });
-  const openai = new OpenAIApi(configuration);
+  // const configuration = new Configuration({
+  //   apiKey: env.OPENAI_API_KEY,
+  // });
+  // const openai = new OpenAIApi(configuration);
 
   return createInnerTRPCContext({
     session,
-    openai,
+    // openai,
   });
 };
 
@@ -76,8 +76,6 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
-import { Configuration, OpenAIApi } from "openai";
-import { env } from "~/env.mjs";
 
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
