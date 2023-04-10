@@ -21,6 +21,14 @@ const handler = async (req: Request): Promise<Response> => {
 
   const messages = messagesSchema.parse(await req.json());
 
+  const plaintextApiKey = req.headers.get("X-OPENAI-API-KEY");
+
+  if (!plaintextApiKey) {
+    return new Response("Missing X-OPENAI-API-KEY header", {
+      status: 400,
+    });
+  }
+
   const payload: CreateChatCompletionRequest = {
     model: "gpt-4",
     messages,
@@ -35,7 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   console.log("awaiting stream");
 
-  const stream = await OpenAIStream(payload);
+  const stream = await OpenAIStream(payload, plaintextApiKey);
   return new Response(stream);
 };
 

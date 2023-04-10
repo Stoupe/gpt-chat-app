@@ -21,7 +21,9 @@ const server = z.object({
   // Add `.min(1) on ID and SECRET if you want to make sure they're not empty
   GITHUB_CLIENT_ID: z.string(),
   GITHUB_CLIENT_SECRET: z.string(),
-  OPENAI_API_KEY: z.string(),
+  // OPENAI_API_KEY: z.string(),
+  // ENCRYPTION_KEY: z.string(),
+  // ENCRYPTION_IV: z.string(),
 });
 
 /**
@@ -46,7 +48,9 @@ const processEnv = {
   GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
   GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
   // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  // OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  // ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+  // ENCRYPTION_IV: process.env.ENCRYPTION_IV,
 };
 
 // Don't touch the part below

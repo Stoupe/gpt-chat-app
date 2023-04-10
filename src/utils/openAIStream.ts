@@ -8,9 +8,11 @@ import {
 } from "eventsource-parser";
 import { type CreateChatCompletionRequest } from "openai";
 import { z } from "zod";
-import { env } from "~/env.mjs";
 
-export async function OpenAIStream(payload: CreateChatCompletionRequest) {
+export async function OpenAIStream(
+  payload: CreateChatCompletionRequest,
+  apiKey: string
+) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
@@ -21,7 +23,7 @@ export async function OpenAIStream(payload: CreateChatCompletionRequest) {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     method: "POST",
     body: JSON.stringify(payload),

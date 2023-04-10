@@ -11,6 +11,7 @@ import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useChat } from "../../hooks/useChat";
 import Link from "next/link";
+import { api } from "~/utils/api";
 
 const ChatPage: NextPage = () => {
   //Get chat id from url path (nextjs)
@@ -31,6 +32,8 @@ const ChatPage: NextPage = () => {
     deleteChat,
     createMultipleMessages,
   } = useChat(chatId);
+
+  const { data: plaintextApiKey } = api.user.getApiKey.useQuery();
 
   /**
    * Responsible for combining the given messages and the user's input into a conversation object,
@@ -59,6 +62,7 @@ const ChatPage: NextPage = () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-OPENAI-API-KEY": plaintextApiKey ?? "",
       },
       body: JSON.stringify(body),
     });

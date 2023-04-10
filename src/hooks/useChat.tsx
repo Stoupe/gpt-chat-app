@@ -6,6 +6,7 @@ export const useChat = (chatId: string) => {
   const { replace } = useRouter();
   const utils = api.useContext();
 
+  // TODO: we should be keeping track of all chats in a global state, so we don't have to refetch them all the time
   const [chat, setChat] = useState<typeof _chat>();
 
   const {
