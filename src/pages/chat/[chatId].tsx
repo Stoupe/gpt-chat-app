@@ -7,12 +7,23 @@ import {
   ChatCompletionRequestMessageRoleEnum,
   type ChatCompletionRequestMessage,
 } from "openai";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useChat } from "../../hooks/useChat";
 import Link from "next/link";
 import { api } from "~/utils/api";
 import { ArrowBackIcon, SettingsIcon, ChatIcon, DeleteIcon } from "~/icons";
+import Prism from "prismjs";
+
+import "prismjs/components/prism-typescript";
+import "prismjs/components/prism-javascript";
+import "prismjs/components/prism-bash";
+import "prismjs/components/prism-python";
+import "prismjs/components/prism-yaml";
+import "prismjs/components/prism-json";
+import "prismjs/components/prism-markdown";
+import "prismjs/components/prism-sql";
+import "prismjs/components/prism-rust";
 
 const ChatPage: NextPage = () => {
   //Get chat id from url path (nextjs)
@@ -35,6 +46,15 @@ const ChatPage: NextPage = () => {
   } = useChat(chatId);
 
   const { data: plaintextApiKey } = api.user.getApiKey.useQuery();
+
+  useEffect(() => {
+    // Only run the code syntax highlighting if we're not streaming a response.
+    // This causes code blocks to look a bit strange when streaming, but it's even
+    // more buggy if we don't do this.
+    if (!isStreamingChatResponse) {
+      Prism.highlightAll();
+    }
+  }, [chat, isStreamingChatResponse]);
 
   /**
    * Responsible for combining the given messages and the user's input into a conversation object,
@@ -315,7 +335,7 @@ const ChatPage: NextPage = () => {
           <h1 className="text-xl font-bold">{chat.name}</h1>
         </div>
 
-        <div className="mt-2 flex grow flex-col gap-2 overflow-y-scroll">
+        <div className="mt-2 flex w-full grow flex-col gap-2 overflow-y-scroll">
           {chat.messages
             .filter((msg) => msg.role !== "system")
             .sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime())
@@ -325,9 +345,9 @@ const ChatPage: NextPage = () => {
                   {message.name}{" "}
                   <span className="font-normal italic">({message.role})</span>
                 </p>
-                <span className="prose">
+                <div className="prose max-w-full prose-pre:whitespace-pre-wrap">
                   <ReactMarkdown>{message.content}</ReactMarkdown>
-                </span>
+                </div>
               </div>
             ))}
         </div>

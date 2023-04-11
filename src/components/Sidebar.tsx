@@ -55,7 +55,9 @@ const Sidebar = () => {
             </nav>
 
             <button
-              className="btn-outline btn w-full"
+              className={`btn w-full ${
+                (chats ?? []).length > 0 ? "btn-outline" : ""
+              }`}
               onClick={(e) => {
                 e.preventDefault();
                 void createNewChat();
@@ -74,7 +76,7 @@ const Sidebar = () => {
               className="btn-ghost btn-sm btn w-full"
               onClick={() => {
                 const dialogResponse = window.prompt(
-                  "Enter your OpenAI API Key (NOTE: THIS IS CURRENTLY STORED IN PLAINTEXT)"
+                  "Enter your OpenAI API Key\nhttps://platform.openai.com/account/api-keys\n\n(NOTE: KEYS ARE CURRENTLY STORED IN PLAINTEXT)"
                 );
                 if (!dialogResponse) return;
                 void updateApiKey({ apiKey: dialogResponse });
