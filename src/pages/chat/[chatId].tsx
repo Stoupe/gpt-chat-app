@@ -12,6 +12,7 @@ import ReactMarkdown from "react-markdown";
 import { useChat } from "../../hooks/useChat";
 import Link from "next/link";
 import { api } from "~/utils/api";
+import { ArrowBackIcon, SettingsIcon, ChatIcon, DeleteIcon } from "~/icons";
 
 const ChatPage: NextPage = () => {
   //Get chat id from url path (nextjs)
@@ -44,18 +45,22 @@ const ChatPage: NextPage = () => {
   const streamChatResponse = async (
     // The messages to send to the OpenAI API
     // We only care about the name, content and role of each message
-    messages: ChatCompletionRequestMessage[] & Record<string, unknown>[]
+    messages: ChatCompletionRequestMessage[]
   ) => {
     setIsStreamingChatResponse(true);
 
     // Combine the messages and the user's input into a conversation object
-    const body: ChatCompletionRequestMessage[] = [
-      ...messages.map((message) => ({
-        role: message.role,
-        content: message.content,
-        name: message.name,
-      })),
-    ];
+    // const body: ChatCompletionRequestMessage[] = [
+    //   ...messages.map((message) => ({
+    //     role: message.role,
+    //     content: message.content,
+    //     name: message.name,
+    //   })),
+    // ];
+    const body = messages;
+
+    console.log("body being sent");
+    console.log(body);
 
     // Make the request to our API endpoint to generate a response from the OpenAI API
     const response = await fetch("/api/generate", {
@@ -173,17 +178,38 @@ const ChatPage: NextPage = () => {
     e.preventDefault();
     if (!chatId || !chat || !session.data) return;
 
-    const msgs = [
-      ...chat.messages,
+    /**
+     * Here we combine the messages and the user's input into a conversation object
+     *
+     * - Previous messages come first
+     * - Then add the user's input message
+     * - Then add the system message last
+     */
+    const conversation: ChatCompletionRequestMessage[] = [
+      ...chat.messages
+        .filter((msg) => msg.role !== "system")
+        .sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime())
+        .map((msg) => ({
+          content: msg.content,
+          role: msg.role,
+          name: msg.name,
+        })),
       {
         content: input.trim(),
         role: "user",
         name: session.data?.user.name ?? "user",
-      } as const,
+      },
+      ...chat.messages
+        .filter((msg) => msg.role === "system")
+        .map((msg) => ({
+          content: msg.content,
+          role: msg.role,
+          name: msg.name,
+        })),
     ];
 
     // Send the message thread to openai for a response
-    void streamChatResponse(msgs);
+    void streamChatResponse(conversation);
 
     // Optimistically update the UI by adding the input message to the chat state
     setChat((prev) => {
@@ -229,95 +255,143 @@ const ChatPage: NextPage = () => {
         <title>{chat.name}</title>
       </Head>
 
+      <input
+        type="checkbox"
+        id="edit-system-message-modal"
+        className="modal-toggle"
+      />
+      <label
+        htmlFor="edit-system-message-modal"
+        className="modal cursor-pointer"
+      >
+        <label className="modal-box relative" htmlFor="">
+          <h3 className="text-lg font-bold">
+            Set your system message for the chat
+          </h3>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+
+              // TODO: Get this in a typesafe way, probably by using a controlled input.
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              const textAreaContent: string =
+                e.currentTarget["system-message-input"].value; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+
+              createMultipleMessages({
+                messages: [
+                  {
+                    content: textAreaContent,
+                    role: "system",
+                    name: "System",
+                  },
+                ],
+                chatId: chat.id,
+              });
+            }}
+          >
+            <textarea
+              name="system-message-input"
+              id="system-message-input"
+              rows={3}
+              className="textarea-bordered textarea my-4 w-full"
+              defaultValue={
+                chat.messages.find((msg) => msg.role === "system")?.content ??
+                ""
+              }
+            />
+            <button type="submit" className="btn">
+              Set system message
+            </button>
+          </form>
+        </label>
+      </label>
+
       <div className="flex max-h-screen w-full flex-col p-5">
         <div className="flex items-center gap-3">
           <Link href={"/"} className="btn-ghost btn gap-2 border-base-200">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="h-6 w-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
-              />
-            </svg>
+            <ArrowBackIcon />
             Home
           </Link>
           <h1 className="text-xl font-bold">{chat.name}</h1>
         </div>
 
         <div className="mt-2 flex grow flex-col gap-2 overflow-y-scroll">
-          {chat.messages.map((message) => (
-            <div className="rounded-lg bg-gray-50 p-4" key={message.id}>
-              <p className="font-bold">
-                {message.name} ({message.role})
-              </p>
-              <span className="prose">
-                <ReactMarkdown>{message.content}</ReactMarkdown>
-              </span>
-            </div>
-          ))}
+          {chat.messages
+            .filter((msg) => msg.role !== "system")
+            .sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime())
+            .map((message) => (
+              <div className="rounded-lg bg-gray-50 p-4" key={message.id}>
+                <p className="font-bold">
+                  {message.name}{" "}
+                  <span className="font-normal italic">({message.role})</span>
+                </p>
+                <span className="prose">
+                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                </span>
+              </div>
+            ))}
         </div>
 
         <form
-          className="form-control flex flex-row gap-4 pt-6"
+          className="form-control flex flex-row items-center gap-2 pt-6"
           onSubmit={handleSubmit}
         >
           <textarea
             ref={chatInputRef}
-            className="input textarea-bordered textarea w-full"
+            className="input textarea-bordered textarea w-full resize-y"
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
             }}
-            // disabled={isStreamingChatResponse}
             onKeyDown={(e) => {
               // Submit the form when the user presses enter (without shift)
               if (e.key === "Enter" && !e.shiftKey) {
                 e.currentTarget.form?.requestSubmit();
+                e.currentTarget.value = "";
               }
             }}
           />
 
           <button
             disabled={isStreamingChatResponse}
-            className={`btn-outline ${
+            className={`btn ${
               isStreamingChatResponse ? "loading" : ""
-            } btn`}
+            } btn px-6`}
             type="submit"
           >
             send
           </button>
 
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              if (!chatId) return;
-              void deleteChat({ chatId });
-            }}
-            className="btn-error btn-square btn"
-            disabled={isStreamingChatResponse}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="h-6 w-6"
+          <div className="dropdown-top dropdown-end dropdown">
+            <label tabIndex={0} className="btn-ghost btn-square btn">
+              <SettingsIcon />
+            </label>
+            <ul
+              tabIndex={0}
+              className="dropdown-content menu rounded-box mb-2 w-72 bg-base-100 p-2 shadow"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-              />
-            </svg>
-          </button>
+              <li>
+                <label htmlFor="edit-system-message-modal">
+                  <ChatIcon />
+                  set system message
+                </label>
+              </li>
+              <li>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!chatId) return;
+                    void deleteChat({ chatId });
+                  }}
+                  className="hover:text-error"
+                  disabled={isStreamingChatResponse}
+                >
+                  <DeleteIcon />
+                  delete chat
+                </button>
+              </li>
+            </ul>
+          </div>
         </form>
       </div>
     </>
