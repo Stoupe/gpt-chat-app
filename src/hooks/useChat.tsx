@@ -16,6 +16,7 @@ export const useFetchChat = (chatId: string) => {
       onSuccess: (data) => {
         addChat(data);
       },
+      refetchOnWindowFocus: false,
     }
   );
 

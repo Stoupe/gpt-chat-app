@@ -33,6 +33,9 @@ const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
   const session = useSession();
 
   const [input, setInput] = useState("");
+  const [model, setModel] = useState<"gpt-3.5-turbo" | "gpt-4">(
+    "gpt-3.5-turbo"
+  );
   const [isStreamingChatResponse, setIsStreamingChatResponse] = useState(false);
 
   const { deleteChat, createMultipleMessages } = useChat(chatId);
@@ -45,16 +48,21 @@ const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
     editMessageContent,
   } = useFetchChat(chatId);
 
-  const { data: plaintextApiKey } = api.user.getApiKey.useQuery();
+  const { data: plaintextApiKey } = api.user.getApiKey.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+  });
 
   useEffect(() => {
-    // Only run the code syntax highlighting if we're not streaming a response.
-    // This causes code blocks to look a bit strange when streaming, but it's even
-    // more buggy if we don't do this.
     if (!isStreamingChatResponse) {
       Prism.highlightAll();
     }
-  }, [chat, isStreamingChatResponse, isChatLoading]);
+
+    // Scroll to the bottom of the chat
+    const chatContainer = document.getElementById("chat-container");
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  }, [chat, isStreamingChatResponse]);
 
   /**
    * Responsible for combining the given messages and the user's input into a conversation object,
@@ -65,12 +73,13 @@ const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
   const streamChatResponse = async (
     // The messages to send to the OpenAI API
     // We only care about the name, content and role of each message
-    messages: ChatCompletionRequestMessage[]
+    messages: ChatCompletionRequestMessage[],
+    model: "gpt-3.5-turbo" | "gpt-4"
   ) => {
     setIsStreamingChatResponse(true);
 
-    // console.log("body being sent");
-    // console.log(body);
+    // console.log("body");
+    // console.log({ messages, model });
 
     // Make the request to our API endpoint to generate a response from the OpenAI API
     const response = await fetch("/api/generate", {
@@ -79,7 +88,7 @@ const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
         "Content-Type": "application/json",
         "X-OPENAI-API-KEY": plaintextApiKey ?? "",
       },
-      body: JSON.stringify(messages),
+      body: JSON.stringify({ messages, model }),
     });
 
     if (!response.ok) {
@@ -177,7 +186,7 @@ const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
     ];
 
     // Send the message thread to openai for a response
-    void streamChatResponse(conversation);
+    void streamChatResponse(conversation, model);
 
     // Optimistically update the UI by adding the input message to the chat state
     addMessage({
@@ -275,7 +284,10 @@ const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
           <h1 className="text-xl font-bold">{chat.name}</h1>
         </div>
 
-        <div className="mt-2 flex w-full grow flex-col gap-2 overflow-y-scroll">
+        <div
+          className="mt-2 flex grow flex-col gap-2 overflow-y-scroll"
+          id="chat-container"
+        >
           {chat.messages
             .filter((msg) => msg.role !== "system")
             .sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime())
@@ -285,7 +297,7 @@ const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
                   {message.name}{" "}
                   <span className="font-normal italic">({message.role})</span>
                 </p>
-                <div className="prose max-w-full prose-pre:whitespace-pre-wrap">
+                <div className="prose max-w-full">
                   <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
               </div>
@@ -330,6 +342,24 @@ const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
               tabIndex={0}
               className="dropdown-content menu rounded-box mb-2 w-72 bg-base-100 p-2 shadow"
             >
+              <li>
+                <div className="form-control active:bg-base-200 active:text-inherit">
+                  <label className="label flex w-full cursor-pointer justify-between">
+                    <span>GPT 3.5</span>
+                    <input
+                      type="checkbox"
+                      className="toggle"
+                      checked={model === "gpt-4"}
+                      onChange={() =>
+                        setModel((m) =>
+                          m === "gpt-3.5-turbo" ? "gpt-4" : "gpt-3.5-turbo"
+                        )
+                      }
+                    />
+                    <span>GPT 4</span>
+                  </label>
+                </div>
+              </li>
               <li>
                 <label htmlFor="edit-system-message-modal">
                   <ChatIcon />

@@ -37,6 +37,8 @@ export async function OpenAIStream(
         if (event.type === "event") {
           const data = event.data;
 
+          console.log(data);
+
           if (data === "[DONE]") {
             controller.close();
             return;
@@ -62,12 +64,12 @@ export async function OpenAIStream(
                 .nonempty(),
             });
 
-            console.log("DATA,", data);
+            // console.log("DATA,", data);
             const json = schema.parse(JSON.parse(data));
 
             const text = json.choices[0].delta.content;
 
-            console.log("TEXT", text);
+            // console.log("TEXT", text);
 
             if (counter < 2 && (text?.match(/\n/) || []).length) {
               console.log("returning");

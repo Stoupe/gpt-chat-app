@@ -16,7 +16,9 @@ const Sidebar = () => {
 
   const utils = api.useContext();
 
-  const { data: chats, refetch } = api.chat.getAll.useQuery();
+  const { data: chats, refetch } = api.chat.getAll.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+  });
   const { mutateAsync: createNewChat } = api.chat.create.useMutation({
     onSuccess: (chat) => {
       if (chat) {
