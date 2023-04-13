@@ -1,49 +1,49 @@
-import { type Message } from "@prisma/client";
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
-import { useRouter } from "next/router";
+import Link from "next/link";
 import {
   ChatCompletionRequestMessageRoleEnum,
   type ChatCompletionRequestMessage,
 } from "openai";
+import Prism from "prismjs";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { useChat } from "../../hooks/useChat";
-import Link from "next/link";
+import { ArrowBackIcon, ChatIcon, DeleteIcon, SettingsIcon } from "~/icons";
 import { api } from "~/utils/api";
-import { ArrowBackIcon, SettingsIcon, ChatIcon, DeleteIcon } from "~/icons";
-import Prism from "prismjs";
+import { useChat, useFetchChat } from "../../hooks/useChat";
+import { z } from "zod";
 
-import "prismjs/components/prism-typescript";
-import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-bash";
-import "prismjs/components/prism-python";
-import "prismjs/components/prism-yaml";
+import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-json";
 import "prismjs/components/prism-markdown";
-import "prismjs/components/prism-sql";
+import "prismjs/components/prism-python";
 import "prismjs/components/prism-rust";
+import "prismjs/components/prism-sql";
+import "prismjs/components/prism-typescript";
+import "prismjs/components/prism-yaml";
 
-const ChatPage: NextPage = () => {
-  //Get chat id from url path (nextjs)
-  const { query } = useRouter();
-  const chatId = query.chatId as string;
+interface NextPageProps {
+  chatId: string;
+}
 
+const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const session = useSession();
 
   const [input, setInput] = useState("");
   const [isStreamingChatResponse, setIsStreamingChatResponse] = useState(false);
 
+  const { deleteChat, createMultipleMessages } = useChat(chatId);
+
   const {
     chat,
-    setChat,
-    isChatLoading,
-    isChatError,
-    deleteChat,
-    createMultipleMessages,
-  } = useChat(chatId);
+    isError: isChatError,
+    isLoading: isChatLoading,
+    addMessage,
+    editMessageContent,
+  } = useFetchChat(chatId);
 
   const { data: plaintextApiKey } = api.user.getApiKey.useQuery();
 
@@ -54,7 +54,7 @@ const ChatPage: NextPage = () => {
     if (!isStreamingChatResponse) {
       Prism.highlightAll();
     }
-  }, [chat, isStreamingChatResponse]);
+  }, [chat, isStreamingChatResponse, isChatLoading]);
 
   /**
    * Responsible for combining the given messages and the user's input into a conversation object,
@@ -69,18 +69,8 @@ const ChatPage: NextPage = () => {
   ) => {
     setIsStreamingChatResponse(true);
 
-    // Combine the messages and the user's input into a conversation object
-    // const body: ChatCompletionRequestMessage[] = [
-    //   ...messages.map((message) => ({
-    //     role: message.role,
-    //     content: message.content,
-    //     name: message.name,
-    //   })),
-    // ];
-    const body = messages;
-
-    console.log("body being sent");
-    console.log(body);
+    // console.log("body being sent");
+    // console.log(body);
 
     // Make the request to our API endpoint to generate a response from the OpenAI API
     const response = await fetch("/api/generate", {
@@ -89,7 +79,7 @@ const ChatPage: NextPage = () => {
         "Content-Type": "application/json",
         "X-OPENAI-API-KEY": plaintextApiKey ?? "",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(messages),
     });
 
     if (!response.ok) {
@@ -107,68 +97,26 @@ const ChatPage: NextPage = () => {
     let done = false;
     let assistantMsg = "";
 
+    addMessage({
+      // This id will be updated when the message is created in the database
+      id: "temp_assistant_message_id",
+      content: "",
+      role: ChatCompletionRequestMessageRoleEnum.Assistant,
+      name: "ChatGPT", //TODO: use name of model?
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      chatId: chatId,
+    });
+
     while (!done) {
       const { value, done: doneReading } = await reader.read();
       done = doneReading;
       const chunkValue = decoder.decode(value);
 
-      setChat((prev) => {
-        if (!prev) {
-          return prev;
-        }
-
-        // Check to see if we've already started creating the new message in the chat state.
-        // If we have, we'll update the message with the next chunk value.
-        // If we haven't, we'll create a new message with the first chunk value.
-        const tempMessageIndex = prev.messages.findIndex(
-          (message) => message.id === "temp_assistant_message_id"
-        );
-
-        // If we haven't started creating the new message from the chunks yet,
-        // create a new message with the first chunk value
-        if (tempMessageIndex === -1) {
-          return {
-            ...prev,
-            messages: [
-              ...prev.messages,
-              {
-                // This id will be updated when the message is created in the database
-                id: "temp_assistant_message_id",
-                content: chunkValue,
-                role: ChatCompletionRequestMessageRoleEnum.Assistant,
-                name: "ChatGPT", //TODO: use name of model?
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              },
-            ],
-          };
-        }
-
-        // If we have already started creating the new message from the chunks,
-        // update the message with the next chunk value
-        const tempMessage = prev.messages[tempMessageIndex];
-        if (!tempMessage) {
-          // This should never happen as we've already checked if the temp message exists
-          return prev;
-        }
-
-        // Update the message with the next chunk value
-        return {
-          ...prev,
-          messages: [
-            // Copy all messages before the temp message
-            ...prev.messages.slice(0, tempMessageIndex),
-            // Update the temp message with the next chunk value
-            {
-              ...tempMessage,
-              content: `${tempMessage?.content ?? ""}${chunkValue}`,
-              updatedAt: new Date(),
-            },
-            // Copy any messages after the temp message (there shoudn't be any, but just in case)
-            ...prev.messages.slice(tempMessageIndex + 1),
-          ],
-        };
-      });
+      editMessageContent(
+        "temp_assistant_message_id",
+        assistantMsg + chunkValue
+      );
 
       // This is used for creating the new message in the database below
       assistantMsg += chunkValue;
@@ -196,7 +144,7 @@ const ChatPage: NextPage = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!chatId || !chat || !session.data) return;
+    if (!chatId || !chat || !session.data || input.trim().length < 1) return;
 
     /**
      * Here we combine the messages and the user's input into a conversation object
@@ -232,28 +180,16 @@ const ChatPage: NextPage = () => {
     void streamChatResponse(conversation);
 
     // Optimistically update the UI by adding the input message to the chat state
-    setChat((prev) => {
-      if (!prev) {
-        return prev;
-      }
-
-      const currentMessage: Message = {
-        id: "temp_user_message_id",
-        content: input,
-        role: "user",
-        name: session.data.user.name ?? "user",
-        chatId: chatId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      return {
-        ...prev,
-        messages: [...prev.messages, currentMessage],
-      };
+    addMessage({
+      id: "temp_user_message_id",
+      content: input,
+      role: "user",
+      name: session.data.user.name ?? "user",
+      chatId: chatId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
-    // Clear the input
     setInput("");
   };
 
@@ -266,7 +202,11 @@ const ChatPage: NextPage = () => {
   }
 
   if (!chat || isChatLoading) {
-    return <div className="loading btn-ghost btn p-5" />;
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="loading btn-ghost btn p-5" />
+      </div>
+    );
   }
 
   return (
@@ -366,8 +306,8 @@ const ChatPage: NextPage = () => {
             onKeyDown={(e) => {
               // Submit the form when the user presses enter (without shift)
               if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
                 e.currentTarget.form?.requestSubmit();
-                e.currentTarget.value = "";
               }
             }}
           />
@@ -416,6 +356,12 @@ const ChatPage: NextPage = () => {
       </div>
     </>
   );
+};
+
+ChatPage.getInitialProps = (ctx) => {
+  const { chatId } = ctx.query;
+  const chatIdString = z.string().parse(chatId);
+  return { chatId: chatIdString };
 };
 
 export default ChatPage;
