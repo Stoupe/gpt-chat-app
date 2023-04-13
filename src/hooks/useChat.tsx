@@ -1,31 +1,37 @@
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useChatStore } from "~/store/store";
 import { api } from "~/utils/api";
+
+export const useFetchChat = (chatId: string) => {
+  // Zustand state
+  const chat = useChatStore((c) => c.chats.find((c) => c.id === chatId));
+  const addChat = useChatStore((c) => c.addChat);
+  const addMessage = useChatStore((c) => c.addMessage);
+  const editMessage = useChatStore((c) => c.editMessage);
+  const editMessageContent = useChatStore((c) => c.editMessageContent);
+
+  const { isLoading, isError } = api.chat.get.useQuery(
+    { chatId },
+    {
+      onSuccess: (data) => {
+        addChat(data);
+      },
+    }
+  );
+
+  return {
+    chat,
+    isLoading,
+    isError,
+    addMessage,
+    editMessage,
+    editMessageContent,
+  };
+};
 
 export const useChat = (chatId: string) => {
   const { replace } = useRouter();
   const utils = api.useContext();
-
-  // TODO: we should be keeping track of all chats in a global state, so we don't have to refetch them all the time
-  const [chat, setChat] = useState<typeof _chat>();
-
-  const {
-    data: _chat,
-    isLoading: isChatLoading,
-    isError: isChatError,
-  } = api.chat.get.useQuery(
-    { chatId },
-    {
-      onSuccess: (data) => {
-        setChat(data);
-      },
-      onError: () => {
-        console.log("error loading chat. redirecting to /");
-        void replace("/");
-      },
-      refetchOnWindowFocus: false,
-    }
-  );
 
   const { mutate: deleteChat } = api.chat.delete.useMutation({
     onSettled: async () => {
@@ -42,11 +48,6 @@ export const useChat = (chatId: string) => {
     });
 
   return {
-    chat,
-    setChat,
-    isChatLoading,
-    isChatError,
-
     deleteChat,
     /**
      * Note: this will invalidate the chat.get query, which will refetch the chat
