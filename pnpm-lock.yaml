@@ -64,9 +64,6 @@ dependencies:
   zod:
     specifier: ^3.21.4
     version: 3.21.4
-  zustand:
-    specifier: ^4.3.7
-    version: 4.3.7(react@18.2.0)
 
 devDependencies:
   '@types/eslint':
@@ -3566,3 +3563,4 @@ packages:
     dependencies:
       react: 18.2.0
       use-sync-external-store: 1.2.0(react@18.2.0)
+    dev: true

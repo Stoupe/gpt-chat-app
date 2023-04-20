@@ -40,7 +40,7 @@ const Sidebar = () => {
         isHidden ? "hidden" : ""
       } flex h-screen w-screen flex-col justify-between border-r bg-base-200 sm:flex sm:w-64`}
     >
-      <div className="flex h-full flex-col justify-between gap-2 px-4 pt-4">
+      <div className="flex h-full flex-col justify-between gap-2 overflow-scroll p-4">
         {isAuthed && (
           <>
             <nav aria-label="Main Nav" className="flex flex-col gap-y-2">
@@ -55,7 +55,13 @@ const Sidebar = () => {
                 </Link>
               ))}
             </nav>
+          </>
+        )}
+      </div>
 
+      {isAuthed && (
+        <>
+          <div className="flex flex-col gap-2 border-t-2 p-4">
             <button
               className={`btn w-full ${
                 (chats ?? []).length > 0 ? "btn-outline" : ""
@@ -67,13 +73,7 @@ const Sidebar = () => {
             >
               New chat
             </button>
-          </>
-        )}
-      </div>
 
-      {isAuthed && (
-        <>
-          <div className="p-4">
             <button
               className="btn-ghost btn-sm btn w-full"
               onClick={() => {

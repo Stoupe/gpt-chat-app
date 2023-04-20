@@ -69,6 +69,35 @@ export const messageRouter = createTRPCRouter({
       });
     }),
 
+  /**
+   * Note: if message passed is null or an empty string, the system message will be deleted
+   */
+  updateSystemMessage: protectedProcedure
+    .input(
+      z.object({
+        chatId: z.string().cuid(),
+        message: z
+          .string()
+          .nullable()
+          .transform((v) => (v === "" ? null : v)),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const chat = await ctx.prisma.chat.update({
+        where: {
+          id_userId: {
+            id: input.chatId,
+            userId: ctx.session.user.id,
+          },
+        },
+        data: {
+          // Note: null = delete, undefined = do nothing
+          systemMessage: input.message,
+        },
+      });
+      return chat;
+    }),
+
   createMultiple: protectedProcedure
     .input(
       z.object({
