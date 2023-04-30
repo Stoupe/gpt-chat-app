@@ -92,10 +92,10 @@ const Sidebar = () => {
             <div className="flex items-center gap-2">
               {/* PROFILE IMAGE */}
               <Image
-                width={10}
-                height={10}
+                width={100}
+                height={100}
                 alt="Profile image"
-                src={session.data.user.image ?? ""}
+                src={user.image ?? ""}
                 className="h-10 w-10 rounded-full object-cover"
               />
 
