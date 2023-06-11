@@ -1,23 +1,14 @@
 "use client";
 
 import { type NextPage } from "next";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 
 const Home: NextPage = () => {
   const session = useSession();
 
   if (!session.data) {
-    return (
-      <button
-        className="btn-outline btn"
-        onClick={() => {
-          void signIn("github");
-        }}
-      >
-        <a>sign in with github</a>
-      </button>
-    );
+    return null;
   }
 
   return (
