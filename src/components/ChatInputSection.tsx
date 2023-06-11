@@ -1,3 +1,5 @@
+"use client";
+
 import { useSession } from "next-auth/react";
 import { type ChatCompletionRequestMessage } from "openai";
 import { type Dispatch, type SetStateAction, useState } from "react";
