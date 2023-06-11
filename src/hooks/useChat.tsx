@@ -1,14 +1,15 @@
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { api } from "~/utils/api";
 
 export const useChat = (chatId: string) => {
-  const { replace } = useRouter();
+  const router = useRouter();
   const utils = api.useContext();
 
   const {
     data: chat,
     isLoading,
     isError,
+    error,
   } = api.chat.get.useQuery(
     { chatId },
     {
@@ -24,8 +25,8 @@ export const useChat = (chatId: string) => {
     });
 
   const { mutate: deleteChat } = api.chat.delete.useMutation({
-    onSettled: async () => {
-      await replace("/");
+    onSettled: () => {
+      router.replace("/");
       void utils.chat.getAll.invalidate();
     },
   });
@@ -41,6 +42,7 @@ export const useChat = (chatId: string) => {
     chat,
     isLoading,
     isError,
+    error,
     /**
      * Note: this will invalidate the chat.getAll query, which will refetch all chats for the sidebar
      */

@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
+"use client";
+
 import { type NextPage } from "next";
 import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
@@ -8,7 +9,12 @@ const Home: NextPage = () => {
 
   if (!session.data) {
     return (
-      <button className="btn-outline btn" onClick={() => signIn("github")}>
+      <button
+        className="btn-outline btn"
+        onClick={() => {
+          void signIn("github");
+        }}
+      >
         <a>sign in with github</a>
       </button>
     );

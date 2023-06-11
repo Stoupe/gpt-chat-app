@@ -1,4 +1,5 @@
-import { type NextPage } from "next";
+"use client";
+
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
@@ -7,7 +8,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { ArrowBackIcon } from "~/icons";
 import { api } from "~/utils/api";
-import { useChat } from "../../hooks/useChat";
+import { useChat } from "~/hooks/useChat";
 
 import "prismjs/components/prism-bash";
 import "prismjs/components/prism-javascript";
@@ -20,12 +21,12 @@ import "prismjs/components/prism-typescript";
 import "prismjs/components/prism-yaml";
 import ChatInputSection from "~/components/ChatInputSection";
 import Message from "~/components/Message";
+import { useParams } from "next/navigation";
 
-interface NextPageProps {
-  chatId: string;
-}
+const ChatPage = () => {
+  const params = useParams();
+  const chatId = z.string().parse(params?.chatId);
 
-const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
   // const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const session = useSession();
   const utils = api.useContext();
@@ -37,6 +38,7 @@ const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
     chat,
     isLoading: isChatLoading,
     isError: isChatError,
+    error,
     updateSystemMessage,
   } = useChat(chatId);
 
@@ -57,13 +59,22 @@ const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
   }
 
   if (isChatError) {
-    return <div>error loading messages</div>;
+    return (
+      <div>
+        error loading messages
+        <pre>
+          <code className="flex-wrap overflow-scroll">
+            {JSON.stringify(error, null, 2)}
+          </code>
+        </pre>
+      </div>
+    );
   }
 
   if (!chat || isChatLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <div className="loading btn-ghost btn p-5" />
+        <div className="btn-ghost loading btn p-5" />
       </div>
     );
   }
@@ -74,48 +85,42 @@ const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
         <title>{chat.name}</title>
       </Head>
 
-      <input
-        type="checkbox"
-        id="edit-system-message-modal"
-        className="modal-toggle"
-      />
-      <label
-        htmlFor="edit-system-message-modal"
-        className="modal cursor-pointer"
-      >
-        <label className="modal-box relative" htmlFor="">
+      <dialog id="edit_system_message_modal" className="modal">
+        <form method="dialog" className="modal-box">
           <h3 className="text-lg font-bold">
             Set your system message for the chat
           </h3>
-          <form>
-            <textarea
-              name="system-message-input"
-              id="system-message-input"
-              rows={3}
-              className="textarea-bordered textarea my-4 w-full"
-              value={chat.systemMessage ?? ""}
-              onChange={(e) => {
-                utils.chat.get.setData(
-                  { chatId },
-                  {
-                    ...chat,
-                    systemMessage: e.target.value,
-                  }
-                );
-                utils;
-              }}
-              onBlur={() => {
-                updateSystemMessage({
-                  chatId: chat.id,
-                  message: chat.systemMessage,
-                });
-              }}
-            />
-          </form>
-        </label>
-      </label>
+          <textarea
+            name="system-message-input"
+            id="system-message-input"
+            rows={3}
+            className="textarea-bordered textarea mt-4 w-full"
+            value={chat.systemMessage ?? ""}
+            onChange={(e) => {
+              utils.chat.get.setData(
+                { chatId },
+                {
+                  ...chat,
+                  systemMessage: e.target.value,
+                }
+              );
+              utils;
+            }}
+            onBlur={() => {
+              updateSystemMessage({
+                chatId: chat.id,
+                message: chat.systemMessage,
+              });
+            }}
+          />
+          <div className="modal-action">
+            {/* if there is a button in form, it will close the modal */}
+            <button className="btn">Close</button>
+          </div>
+        </form>
+      </dialog>
 
-      <div className="flex max-h-screen w-full flex-col p-5">
+      <div className="flex h-full max-h-screen flex-col p-5">
         <div className="flex items-center gap-3">
           <Link href={"/"} className="btn-ghost btn gap-2 border-base-200">
             <ArrowBackIcon />
@@ -124,21 +129,19 @@ const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
           <h1 className="text-xl font-bold">{chat.name}</h1>
         </div>
 
-        {chat.systemMessage && (
-          <div className="mt-2">
+        <div
+          className="mt-2 flex grow flex-col gap-2 overflow-y-scroll scroll-smooth"
+          id="chat-container"
+        >
+          {chat.systemMessage && (
             <Message
               isHighlighted
               content={chat.systemMessage}
               senderName="System message"
               senderRole="system"
             />
-          </div>
-        )}
+          )}
 
-        <div
-          className="mt-2 flex grow flex-col gap-2 overflow-y-scroll"
-          id="chat-container"
-        >
           {chat.messages
             .sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime())
             .map((message) => (
@@ -165,12 +168,6 @@ const ChatPage: NextPage<NextPageProps> = ({ chatId }) => {
       </div>
     </>
   );
-};
-
-ChatPage.getInitialProps = (ctx) => {
-  const { chatId } = ctx.query;
-  const chatIdString = z.string().parse(chatId);
-  return { chatId: chatIdString };
 };
 
 export default ChatPage;

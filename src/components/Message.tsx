@@ -1,3 +1,5 @@
+"use client";
+
 import { type Role } from "@prisma/client";
 import ReactMarkdown from "react-markdown";
 
@@ -19,8 +21,10 @@ const Message = ({
       <p className="font-bold">
         {senderName} <span className="font-normal italic">({senderRole})</span>
       </p>
-      <div className="prose max-w-full">
-        <ReactMarkdown>{content}</ReactMarkdown>
+      <div className="w-full">
+        <div className="prose max-w-fit prose-code:whitespace-pre-wrap">
+          <ReactMarkdown>{content}</ReactMarkdown>
+        </div>
       </div>
     </div>
   );

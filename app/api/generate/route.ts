@@ -6,11 +6,9 @@ import {
 import { z } from "zod";
 import { OpenAIStream } from "~/utils/openAIStream";
 
-export const config = {
-  runtime: "edge",
-};
+export const runtime = "edge";
 
-const handler = async (req: Request): Promise<Response> => {
+export async function POST(req: Request): Promise<Response> {
   const reqSchema: z.ZodType<{
     model: "gpt-3.5-turbo" | "gpt-4";
     messages: ChatCompletionRequestMessage[];
@@ -51,6 +49,4 @@ const handler = async (req: Request): Promise<Response> => {
 
   const stream = await OpenAIStream(payload, plaintextApiKey);
   return new Response(stream);
-};
-
-export default handler;
+}

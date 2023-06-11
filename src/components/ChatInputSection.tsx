@@ -201,8 +201,8 @@ const ChatInputSection = ({
           className="dropdown-content menu rounded-box mb-2 w-72 bg-base-100 p-2 shadow"
         >
           <li>
-            <div className="form-control active:bg-base-200 active:text-inherit">
-              <label className="label flex w-full cursor-pointer justify-between">
+            <div className="form-control justify-center active:bg-base-200 active:text-inherit">
+              <label className="label flex w-full cursor-pointer gap-4">
                 <span>GPT 3.5</span>
                 <input
                   type="checkbox"
@@ -219,10 +219,19 @@ const ChatInputSection = ({
             </div>
           </li>
           <li>
-            <label htmlFor="edit-system-message-modal">
+            <button
+              className=""
+              onClick={() => {
+                document
+                  .querySelector<HTMLDialogElement>(
+                    "#edit_system_message_modal"
+                  )
+                  ?.showModal();
+              }}
+            >
               <ChatIcon />
               set system message
-            </label>
+            </button>
           </li>
           <li>
             <button

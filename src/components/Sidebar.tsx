@@ -1,14 +1,19 @@
+"use client";
+
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { api } from "~/utils/api";
 
 const Sidebar = () => {
-  const { query, pathname, replace } = useRouter();
-  const chatId = query.chatId as string | undefined;
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const isHidden = pathname.includes("/chat/[chatId]");
+  const chatId = searchParams?.get("chatId");
+
+  const isHidden = pathname?.includes("/chat/[chatId]");
 
   const session = useSession();
   const user = session.data?.user;
@@ -23,7 +28,7 @@ const Sidebar = () => {
     onSuccess: (chat) => {
       if (chat) {
         void refetch();
-        void replace(`/chat/${chat?.id}`);
+        void router.replace(`/chat/${chat?.id}`);
       }
     },
   });
