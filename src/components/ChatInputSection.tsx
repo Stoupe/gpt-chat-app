@@ -127,13 +127,15 @@ const ChatInputSection = ({
       ...chat.messages.map((msg) => ({
         content: msg.content,
         role: msg.role,
-        name: msg.name,
+        // NOTE: using names appears to be broken when multiple messages are in the conversation
+        // name: msg.name,
       })),
     ];
 
     if (chat.systemMessage) {
       conversation.push({
-        name: "system",
+        // NOTE: using names appears to be broken when multiple messages are in the conversation
+        // name: "system",
         role: "system",
         content: chat.systemMessage,
       });
