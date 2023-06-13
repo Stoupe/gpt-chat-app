@@ -3,21 +3,21 @@
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
-import Prism from "prismjs";
+// import Prism from "prismjs";
 import { useEffect, useState } from "react";
 import { ArrowBackIcon } from "~/icons";
 import { api } from "~/utils/api";
 import { useChat } from "~/hooks/useChat";
 
-import "prismjs/components/prism-bash";
-import "prismjs/components/prism-javascript";
-import "prismjs/components/prism-json";
-import "prismjs/components/prism-markdown";
-import "prismjs/components/prism-python";
-import "prismjs/components/prism-rust";
-import "prismjs/components/prism-sql";
-import "prismjs/components/prism-typescript";
-import "prismjs/components/prism-yaml";
+// import "prismjs/components/prism-bash";
+// import "prismjs/components/prism-javascript";
+// import "prismjs/components/prism-json";
+// import "prismjs/components/prism-markdown";
+// import "prismjs/components/prism-python";
+// import "prismjs/components/prism-rust";
+// import "prismjs/components/prism-sql";
+// import "prismjs/components/prism-typescript";
+// import "prismjs/components/prism-yaml";
 import ChatInputSection from "~/components/ChatInputSection";
 import Message from "~/components/Message";
 
@@ -28,7 +28,7 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
   const session = useSession();
   const utils = api.useContext();
 
-  const [isStreamingChatResponse] = useState(false);
+  // const [isStreamingChatResponse] = useState(false);
   const [streamedMessage, setStreamedMessage] = useState("");
 
   const {
@@ -39,17 +39,17 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
     updateSystemMessage,
   } = useChat(chatId);
 
-  useEffect(() => {
-    if (!isStreamingChatResponse) {
-      Prism.highlightAll();
-    }
+  // useEffect(() => {
+  //   if (!isStreamingChatResponse) {
+  //     Prism.highlightAll();
+  //   }
 
-    // Scroll to the bottom of the chat
-    const chatContainer = document.getElementById("chat-container");
-    if (chatContainer) {
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-  }, [chat, isStreamingChatResponse]);
+  //   // Scroll to the bottom of the chat
+  //   const chatContainer = document.getElementById("chat-container");
+  //   if (chatContainer) {
+  //     chatContainer.scrollTop = chatContainer.scrollHeight;
+  //   }
+  // }, [chat, isStreamingChatResponse]);
 
   if (!session) {
     return null;
