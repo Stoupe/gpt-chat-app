@@ -3,17 +3,12 @@
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { api } from "~/utils/api";
 
 const Sidebar = () => {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-
-  const chatId = searchParams?.get("chatId");
-
-  const isHidden = pathname?.includes("/chat/[chatId]");
 
   const session = useSession();
   const user = session.data?.user;
@@ -41,9 +36,7 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`${
-        isHidden ? "hidden" : ""
-      } flex h-screen w-screen flex-col justify-between border-r bg-base-200 sm:flex sm:w-64`}
+      className={`flex h-screen w-screen flex-col justify-between border-r bg-base-200 sm:flex sm:w-64`}
     >
       <div className="flex h-full flex-col justify-between gap-2 overflow-y-scroll p-4">
         {isAuthed && (
@@ -53,10 +46,11 @@ const Sidebar = () => {
                 <Link
                   key={chat.id}
                   href={`/chat/${chat.id}`}
-                  className="flex items-center gap-2 rounded-lg border-2 border-neutral-300 border-opacity-0 bg-base-300 px-4 py-2 text-base-content transition-all hover:border-opacity-100 hover:text-base-content"
+                  className="flex items-center gap-2 rounded-lg border-2 border-neutral-300 border-opacity-0 bg-base-300 px-4 py-2 text-sm font-medium text-base-content transition-all hover:border-opacity-100 hover:text-base-content"
                 >
-                  {chat.id === chatId && <span>👉</span>}
-                  <span className="text-sm font-medium">{chat.name}</span>
+                  <span>
+                    {pathname?.endsWith(chat.id) && "👉"} {chat.name}
+                  </span>
                 </Link>
               ))}
             </nav>
