@@ -19,6 +19,7 @@ const Sidebar = () => {
   const { data: chats, refetch } = api.chat.getAll.useQuery(undefined, {
     refetchOnWindowFocus: false,
   });
+
   const { mutateAsync: createNewChat } = api.chat.create.useMutation({
     onSuccess: (chat) => {
       if (chat) {
@@ -44,6 +45,7 @@ const Sidebar = () => {
             <nav aria-label="Main Nav" className="flex flex-col gap-y-2">
               {chats?.map((chat) => (
                 <Link
+                  // prefetch={false}
                   key={chat.id}
                   href={`/chat/${chat.id}`}
                   className="flex items-center gap-2 rounded-lg border-2 border-neutral-300 border-opacity-0 bg-base-300 px-4 py-2 text-sm font-medium text-base-content transition-all hover:border-opacity-100 hover:text-base-content"

@@ -5,7 +5,6 @@ import Head from "next/head";
 import Link from "next/link";
 import Prism from "prismjs";
 import { useEffect, useState } from "react";
-import { z } from "zod";
 import { ArrowBackIcon } from "~/icons";
 import { api } from "~/utils/api";
 import { useChat } from "~/hooks/useChat";
@@ -21,11 +20,9 @@ import "prismjs/components/prism-typescript";
 import "prismjs/components/prism-yaml";
 import ChatInputSection from "~/components/ChatInputSection";
 import Message from "~/components/Message";
-import { useParams } from "next/navigation";
 
-const ChatPage = () => {
-  const params = useParams();
-  const chatId = z.string().parse(params?.chatId);
+export default function ChatPage({ params }: { params: { chatId: string } }) {
+  const chatId = params.chatId;
 
   // const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const session = useSession();
@@ -168,6 +165,4 @@ const ChatPage = () => {
       </div>
     </>
   );
-};
-
-export default ChatPage;
+}
